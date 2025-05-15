@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 contract SimpleBank {
     address owner;
     uint256 public constant CREATE_USER_FEE = 0.0005 ether;
-    uint256 userId = 1;
+    uint256 public userId = 1;
 
     struct Banker {
         uint256 userid;
