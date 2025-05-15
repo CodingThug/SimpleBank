@@ -1,29 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-contract SimpleBank{
-
+contract SimpleBank {
     address owner;
-    uint constant public CREATE_USER_FEE = 0.0005 ether;
-    uint userId = 1;
+    uint256 public constant CREATE_USER_FEE = 0.0005 ether;
+    uint256 userId = 1;
 
-    struct Banker{
-      uint userid;  
-      string name;
-      address holder;
-      uint age;
-      string occupation;
-      bool isMarried;
-      GENDER selection;
+    struct Banker {
+        uint256 userid;
+        string name;
+        address holder;
+        uint256 age;
+        string occupation;
+        bool isMarried;
+        GENDER selection;
     }
 
     mapping(address => Banker) internal holderByWalletAddress;
-    mapping(string => Banker)internal holderByName;
+    mapping(string => Banker) internal holderByName;
 
-    enum GENDER{
-      NONSELECTED,
-      MALE,
-      FEMALE
+    enum GENDER {
+        NONSELECTED,
+        MALE,
+        FEMALE
     }
 
     error InvalidAddress(address newUser, address oldUser);
@@ -41,7 +40,7 @@ contract SimpleBank{
     function createUser(
         address currentHolder,
         string memory holderName,
-        uint age,
+        uint256 age,
         string memory occupation,
         bool isMarried,
         GENDER _gender
@@ -66,9 +65,14 @@ contract SimpleBank{
         userId++;
     }
 
-    function getHolderInfo(string memory name) public view returns (uint currentUserId, uint age, string memory occupation, bool isMarried, string memory gender) {
+    function getHolderInfo(string memory name)
+        public
+        view
+        returns (uint256 currentUserId, uint256 age, string memory occupation, bool isMarried, string memory gender)
+    {
         Banker memory holder = holderByName[name];
-        string memory genderStr = holder.selection == GENDER.MALE ? "male" : holder.selection == GENDER.FEMALE ? "female" : "nonselected";
+        string memory genderStr =
+            holder.selection == GENDER.MALE ? "male" : holder.selection == GENDER.FEMALE ? "female" : "nonselected";
         return (holder.userid, holder.age, holder.occupation, holder.isMarried, genderStr);
     }
 }
