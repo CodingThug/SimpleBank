@@ -18,14 +18,7 @@ contract SimpleBankTest is Test {
     // Test successful user creation
     function test_CreateUser_Success() public {
         vm.prank(USER);
-        simpleBank.createUser{value: CREATE_USER_FEE}(
-            USER,
-            "Alice",
-            25,
-            "Engineer",
-            true,
-            SimpleBank.GENDER.FEMALE
-        );
+        simpleBank.createUser{value: CREATE_USER_FEE}(USER, "Alice", 25, "Engineer", true, SimpleBank.GENDER.FEMALE);
 
         // Check user creation via getHolderInfo
         (uint256 userid, uint256 age, string memory occupation, bool isMarried, string memory gender) =
@@ -44,14 +37,7 @@ contract SimpleBankTest is Test {
     function test_CreateUser_Fail_IncorrectFee() public {
         vm.prank(USER);
         vm.expectRevert("you gotta come correct my g.");
-        simpleBank.createUser{value: 0.0001 ether}(
-            USER,
-            "Alice",
-            25,
-            "Engineer",
-            true,
-            SimpleBank.GENDER.FEMALE
-        );
+        simpleBank.createUser{value: 0.0001 ether}(USER, "Alice", 25, "Engineer", true, SimpleBank.GENDER.FEMALE);
     }
 
     // Test createUser with zero address
@@ -59,26 +45,14 @@ contract SimpleBankTest is Test {
         vm.prank(USER);
         vm.expectRevert(abi.encodeWithSelector(SimpleBank.InvalidAddress.selector, ZERO_ADDRESS, ZERO_ADDRESS));
         simpleBank.createUser{value: CREATE_USER_FEE}(
-            ZERO_ADDRESS,
-            "Alice",
-            25,
-            "Engineer",
-            true,
-            SimpleBank.GENDER.FEMALE
+            ZERO_ADDRESS, "Alice", 25, "Engineer", true, SimpleBank.GENDER.FEMALE
         );
     }
 
     // Test getHolderInfo for existing user
     function test_GetHolderInfo_Success() public {
         vm.prank(USER);
-        simpleBank.createUser{value: CREATE_USER_FEE}(
-            USER,
-            "Alice",
-            25,
-            "Engineer",
-            true,
-            SimpleBank.GENDER.FEMALE
-        );
+        simpleBank.createUser{value: CREATE_USER_FEE}(USER, "Alice", 25, "Engineer", true, SimpleBank.GENDER.FEMALE);
 
         (uint256 userid, uint256 age, string memory occupation, bool isMarried, string memory gender) =
             simpleBank.getHolderInfo("Alice");
@@ -104,14 +78,7 @@ contract SimpleBankTest is Test {
     function test_CreateUser_DifferentGenders() public {
         // Test MALE
         vm.prank(USER);
-        simpleBank.createUser{value: CREATE_USER_FEE}(
-            USER,
-            "Bob",
-            30,
-            "Doctor",
-            false,
-            SimpleBank.GENDER.MALE
-        );
+        simpleBank.createUser{value: CREATE_USER_FEE}(USER, "Bob", 30, "Doctor", false, SimpleBank.GENDER.MALE);
         (,,, bool isMarried, string memory gender) = simpleBank.getHolderInfo("Bob");
         assertFalse(isMarried);
         assertEq(gender, "male");
@@ -119,12 +86,7 @@ contract SimpleBankTest is Test {
         // Test NONSELECTED
         vm.prank(USER);
         simpleBank.createUser{value: CREATE_USER_FEE}(
-            address(0x5678),
-            "Charlie",
-            40,
-            "Teacher",
-            true,
-            SimpleBank.GENDER.NONSELECTED
+            address(0x5678), "Charlie", 40, "Teacher", true, SimpleBank.GENDER.NONSELECTED
         );
         (,,,, gender) = simpleBank.getHolderInfo("Charlie");
         assertEq(gender, "nonselected");
