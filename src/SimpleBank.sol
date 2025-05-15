@@ -18,6 +18,8 @@ contract SimpleBank {
 
     mapping(address => Banker) internal holderByWalletAddress;
     mapping(string => Banker) internal holderByName;
+    mapping(address => uint256) internal balances;
+    mapping(address => uint256) internal depositTimestamp;
 
     enum GENDER {
         NONSELECTED,
@@ -38,7 +40,7 @@ contract SimpleBank {
     }
 
     function createUser(
-        address currentHolder,
+        address currentHolderWalletAddress,
         string memory holderName,
         uint256 age,
         string memory occupation,
@@ -47,20 +49,22 @@ contract SimpleBank {
     ) public payable {
         require(msg.value == CREATE_USER_FEE, "you gotta come correct my g.");
 
-        if (currentHolder == address(0)) revert InvalidAddress(currentHolder, address(0));
+        if (currentHolderWalletAddress == address(0)) revert InvalidAddress(currentHolderWalletAddress, address(0));
 
         Banker memory newHolder = Banker({
             userid: userId,
             name: holderName,
-            holder: currentHolder,
+            holder: currentHolderWalletAddress,
             age: age,
             occupation: occupation,
             isMarried: isMarried,
             selection: _gender
         });
 
-        holderByWalletAddress[currentHolder] = newHolder;
+        holderByWalletAddress[currentHolderWalletAddress] = newHolder;
         holderByName[holderName] = newHolder;
+        balances[currentHolderWalletAddress] = msg.value;
+        depositTimestamp[currentHolderWalletAddress] = block.timestamp;
 
         userId++;
     }
