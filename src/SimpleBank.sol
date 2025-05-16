@@ -33,6 +33,7 @@ contract SimpleBank {
     event FundsWithdrawn(address to, uint256 amount);
     event Receive(address sender, uint256 value);
     event Fallback(address sender, string message);
+    event Deposited(address indexed user, uint256 amount);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only the owner of this contract can call this function.");
@@ -89,5 +90,14 @@ contract SimpleBank {
         string memory genderStr =
             holder.selection == GENDER.MALE ? "male" : holder.selection == GENDER.FEMALE ? "female" : "nonselected";
         return (holder.userid, holder.age, holder.occupation, holder.isMarried, genderStr, balances[holder.holder]);
+    }
+
+    function makeDeposit() public payable {
+        
+
+        balances[msg.sender] += msg.value;
+    
+
+        emit Deposited(msg.sender, msg.value);
     }
 }
