@@ -40,10 +40,17 @@ contract SimpleBank {
         _;
     }
 
+    // Constructor to set the contract owner
+    constructor() {
+        owner = msg.sender;
+    }
+
+    // Returns the fixed fee for creating a user
     function getCreateFeePrice() public pure returns (uint256) {
         return CREATE_USER_FEE;
     }
 
+    // Creates a new user, storing their info and depositing the fee to the contract
     function createUser(
         address currentHolderWalletAddress,
         string memory holderName,
@@ -71,9 +78,13 @@ contract SimpleBank {
         balances[currentHolderWalletAddress] = msg.value;
         depositTimestamp[currentHolderWalletAddress] = block.timestamp;
 
+        // Emit UserCreated event to log the new user
+        emit UserCreated(currentHolderWalletAddress, holderName);
+
         userId++;
     }
 
+    // Retrieves user information, including their balance, by name
     function getHolderInfo(string memory name)
         public
         view
@@ -92,12 +103,50 @@ contract SimpleBank {
         return (holder.userid, holder.age, holder.occupation, holder.isMarried, genderStr, balances[holder.holder]);
     }
 
+    // Allows users to deposit funds, adding to their balance in the contract
     function makeDeposit() public payable {
-        
+        // Ensure the deposit amount is greater than 0
+        require(msg.value > 0, "Deposit amount must be greater than 0");
 
+        // Add the deposited amount to the user's balance
         balances[msg.sender] += msg.value;
-    
 
+        // Emit event to log the deposit
         emit Deposited(msg.sender, msg.value);
+    }
+
+    // Allows users to withdraw funds from their own balance
+    function withdraw(uint256 amount) public {
+        // Ensure the requested amount is greater than 0
+        require(amount > 0, "Withdrawal amount must be greater than 0");
+        // Ensure the user has sufficient balance
+        require(balances[msg.sender] >= amount, "Insufficient balance");
+
+        // Update the user's balance
+        balances[msg.sender] -= amount;
+
+        // Transfer the amount to the user
+        (bool success,) = msg.sender.call{value: amount}("");
+        require(success, "Withdrawal failed");
+
+        // Emit event to log the withdrawal
+        emit FundsWithdrawn(msg.sender, amount);
+    }
+
+    // Allows only the owner to withdraw the contract's balance to a specified address
+    function withdrawContractFunds(address payable recipient, uint256 amount) public onlyOwner {
+        // Ensure the recipient address is valid
+        require(recipient != address(0), "Invalid recipient address");
+        // Ensure the requested amount is greater than 0
+        require(amount > 0, "Withdrawal amount must be greater than 0");
+        // Ensure the contract has sufficient balance
+        require(address(this).balance >= amount, "Insufficient contract balance");
+
+        // Transfer the amount to the recipient
+        (bool success,) = recipient.call{value: amount}("");
+        require(success, "Contract withdrawal failed");
+
+        // Emit event to log the withdrawal
+        emit FundsWithdrawn(recipient, amount);
     }
 }
