@@ -107,6 +107,27 @@ contract SimpleBankTest is Test {
         assertEq(gender, "nonselected");
     }
 
+    // Test justMyBalance returns correct contract balance
+    function test_JustMyBalance_Success() public {
+        // Register a user and deposit
+        vm.prank(USER);
+        simpleBank.createUser{value: CREATE_USER_FEE}(USER, "Alice", 25, "Engineer", true, SimpleBank.GENDER.FEMALE);
+        vm.prank(USER);
+        simpleBank.makeDeposit{value: 0.1 ether}();
+
+        // Check balance
+        vm.prank(USER);
+        uint256 balance = simpleBank.justMyBalance();
+        assertEq(balance, CREATE_USER_FEE + 0.1 ether);
+    }
+
+    // Test justMyBalance for non-registered user
+    function test_JustMyBalance_NonRegistered() public {
+        vm.prank(USER);
+        uint256 balance = simpleBank.justMyBalance();
+        assertEq(balance, 0);
+    }
+
     // Test successful deposit
     function test_MakeDeposit_Success() public {
         // Register a user
@@ -221,5 +242,59 @@ contract SimpleBankTest is Test {
         vm.prank(owner);
         vm.expectRevert("Invalid recipient address");
         simpleBank.withdrawContractFunds(payable(ZERO_ADDRESS), CREATE_USER_FEE);
+    }
+
+    // Test successful banker removal by owner
+    function test_RemoveBanker_Success() public {
+        // Register a user
+        vm.prank(USER);
+        simpleBank.createUser{value: CREATE_USER_FEE}(USER, "Alice", 25, "Engineer", true, SimpleBank.GENDER.FEMALE);
+
+        // Owner removes banker
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit SimpleBank.UserRemoved(USER, "Alice");
+        simpleBank.removeBanker(USER);
+
+        // Verify banker is removed
+        (uint256 userid,,,,, uint256 balance) = simpleBank.getHolderInfo("Alice");
+        assertEq(userid, 0);
+        assertEq(balance, 0);
+    }
+
+    // Test non-owner attempting to remove banker
+    function test_RemoveBanker_Fail_NonOwner() public {
+        vm.prank(USER);
+        simpleBank.createUser{value: CREATE_USER_FEE}(USER, "Alice", 25, "Engineer", true, SimpleBank.GENDER.FEMALE);
+
+        vm.prank(USER);
+        vm.expectRevert("Only the owner of this contract can call this function.");
+        simpleBank.removeBanker(USER);
+    }
+
+    // Test removing non-existent banker
+    function test_RemoveBanker_Fail_NonExistent() public {
+        vm.prank(owner);
+        vm.expectRevert("Banker does not exist");
+        simpleBank.removeBanker(USER);
+    }
+
+    // Test receive function for direct ETH transfers
+    function test_Receive_Success() public {
+        vm.prank(USER);
+        vm.expectEmit(true, false, false, true);
+        emit SimpleBank.Receive(USER, 0.1 ether);
+        (bool success,) = address(simpleBank).call{value: 0.1 ether}("");
+        assertTrue(success);
+        assertEq(address(simpleBank).balance, 0.1 ether);
+    }
+
+    // Test fallback function for non-existent function calls
+    function test_Fallback_Success() public {
+        vm.prank(USER);
+        vm.expectEmit(true, false, false, true);
+        emit SimpleBank.Fallback(USER, string(abi.encodeWithSignature("nonExistentFunction()")));
+        (bool success,) = address(simpleBank).call(abi.encodeWithSignature("nonExistentFunction()"));
+        assertTrue(success);
     }
 }

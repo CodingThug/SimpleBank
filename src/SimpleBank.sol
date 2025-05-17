@@ -30,6 +30,7 @@ contract SimpleBank {
     error InvalidAddress(address newUser, address oldUser);
 
     event UserCreated(address createdUser, string name);
+    event UserRemoved(address banker, string name);
     event FundsWithdrawn(address to, uint256 amount);
     event Receive(address sender, uint256 value);
     event Fallback(address sender, string message);
@@ -103,6 +104,11 @@ contract SimpleBank {
         return (holder.userid, holder.age, holder.occupation, holder.isMarried, genderStr, balances[holder.holder]);
     }
 
+    // Returns the caller's balance stored in the contract
+    function justMyBalance() public view returns (uint256) {
+        return balances[msg.sender];
+    }
+
     // Allows users to deposit funds, adding to their balance in the contract
     function makeDeposit() public payable {
         // Ensure the deposit amount is greater than 0
@@ -148,5 +154,33 @@ contract SimpleBank {
 
         // Emit event to log the withdrawal
         emit FundsWithdrawn(recipient, amount);
+    }
+
+    // Allows only the owner to remove a banker and their data
+    function removeBanker(address banker) public onlyOwner {
+        // Ensure the banker exists
+        require(holderByWalletAddress[banker].holder != address(0), "Banker does not exist");
+
+        // Delete banker from mappings
+        string memory name = holderByWalletAddress[banker].name;
+        delete holderByWalletAddress[banker];
+        delete holderByName[name];
+
+        // Reset balance and deposit timestamp
+        delete balances[banker];
+        delete depositTimestamp[banker];
+
+        // Emit event to log the removal
+        emit UserRemoved(banker, name);
+    }
+
+    // Handles direct ETH transfers to the contract
+    receive() external payable {
+        emit Receive(msg.sender, msg.value);
+    }
+
+    // Handles non-existent function calls
+    fallback() external payable {
+        emit Fallback(msg.sender, string(msg.data));
     }
 }
